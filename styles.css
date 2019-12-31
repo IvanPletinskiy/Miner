@@ -17,3 +17,11 @@
   display: table;
   clear: both;
 }
+.startButton {
+  width: 200px;
+  height: 50px;
+  color: #000;
+}
+.field {
+  width: 33%
+}
