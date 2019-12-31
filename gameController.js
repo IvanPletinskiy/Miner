@@ -1,8 +1,9 @@
 var field;
-var field_size;
-var field_div;
-var mines_total;
+var fieldSize;
+var fieldDiv;
+var minesTotal;
 var flagsLeft;
+var isFirstClick;
 //Состояния ячеек поля
 var cellStates = {
 	HIDDEN_EMPTY : 0,
@@ -13,41 +14,20 @@ var cellStates = {
 }
 
 $(document).ready(function() {
-	field_div = $("#field");
+	fieldDiv = $("#field");
 	initialize();
 });
 
 function initialize() {
 	field = [];
-	field_size = 5;
-	field_div.html("");
-	mines_total = 10;
-	flagsLeft = mines_total;
-	for (var i = 0; i < field_size; i++) {
-		field.push([]);
-		var new_row = document.createElement("div");
-		new_row.classList.add("row");
-		new_row.id = "row" + i;
-		document.getElementById("field").appendChild(new_row);
-		for (var j = 0; j < field_size; j++) {
-			field[i][j] = 0;
-			var new_column = document.createElement("div");
-			new_column.classList.add("column");
-			new_column.setAttribute("style", "background-color: #BBBBBB; border:1px solid black");
-			new_column.id = "cell" + (i * field_size + j);
-			new_row.appendChild(new_column);
-		}
-	}
-	var k = mines_total;
-	while (k > 0) {
-		var y = Math.floor(Math.random() * field_size);
-		var x = Math.floor(Math.random() * field_size);
+	fieldSize = 8;
+	fieldDiv.html("");
+	minesTotal = 35;
+	flagsLeft = minesTotal;
+	isFirstClick = true;
 
-		if (field[y][x] == cellStates.HIDDEN_MINE)
-			continue;
-		field[y][x] = cellStates.HIDDEN_MINE;
-		k--;
-	}
+	fillField();
+
 	$('#endGameTextDiv').html("<h1></h1>");
 	updateFlagsTextView();
 
@@ -55,11 +35,49 @@ function initialize() {
 
 	bindListeners();
 }
+
+function fillField() {
+	for (var i = 0; i < fieldSize; i++) {
+		field.push([]);
+		var newRow = document.createElement("div");
+		newRow.classList.add("row");
+		newRow.id = "row" + i;
+		document.getElementById("field").appendChild(newRow);
+		for (var j = 0; j < fieldSize; j++) {
+			field[i][j] = 0;
+			var newColumn = document.createElement("div");
+			newColumn.classList.add("column");
+			newColumn.setAttribute("style", "background-color: #BBBBBB; border:1px solid black");
+			newColumn.id = "cell" + (i * fieldSize + j);
+			newRow.appendChild(newColumn);
+		}
+	}
+}
+//Заполняет минами ячейки, кроме ячейки position
+function fillMines(position) {
+	var cellY = position / fieldSize;
+	var cellX = position % fieldSize;
+	var k = minesTotal;
+	while (k > 0) {
+		var y = Math.floor(Math.random() * fieldSize);
+		var x = Math.floor(Math.random() * fieldSize);
+
+		if (field[y][x] == cellStates.HIDDEN_MINE || cellY == y || cellX == x)
+			continue;
+		field[y][x] = cellStates.HIDDEN_MINE;
+		k--;
+	}
+}
 //Привязка слушателей jQuery
 function bindListeners() {
-	$('.column').on("mousedown",function(e){ 
+	$('.column').on("mousedown",function(e) { 
 	var id = this.id;
 	var intId = parseInt(id.substring(4, 10));
+
+	if(isFirstClick) {
+		isFirstClick = false;
+		fillMines(intId);
+	}
 	if (e.button == 0) {
 		handleCellClick.call(this, intId, true);
 		return false;
@@ -70,6 +88,7 @@ function bindListeners() {
     } 
     return true; 
  	}); 
+
  	$('#startButton').click(function() {
  		initialize();
  	})
@@ -77,11 +96,13 @@ function bindListeners() {
 
 function handleCellClick(position, isLeftClick) {
 	var cell = this;
-	var y = Math.floor(position / field_size);
-	var x = position % field_size;
+	var y = Math.floor(position / fieldSize);
+	var x = position % fieldSize;
+
 	if (field[y][x] == cellStates.OPEN) {		
 		return;
 	}
+
 	if (isLeftClick) {
 		//Если кликнули по мине, конец игры, иначе обновляем игровое поле
 		if (field[y][x] == cellStates.HIDDEN_MINE) {
@@ -101,25 +122,28 @@ function updateCell(x, y) {
 		return 1;
 	if (field[y][x] == cellStates.OPEN || field[y][x] == cellStates.FLAG_EMPTY)
 		return 0;
+
 	field[y][x] = cellStates.OPEN;
+
 	var count = 0;
 	if (y > 0 && x > 0)
 		count += updateCell(x - 1, y - 1);
 	if (y > 0)
 		count += updateCell(x, y - 1);
-	if (y > 0 && x < field_size - 1)
+	if (y > 0 && x < fieldSize - 1)
 		count += updateCell(x + 1, y - 1);
-	if (x < field_size - 1)
+	if (x < fieldSize - 1)
 		count += updateCell(x + 1, y);
-	if (y < field_size - 1 && x < field_size - 1)
+	if (y < fieldSize - 1 && x < fieldSize - 1)
 		count += updateCell(x + 1, y + 1);
-	if (y < field_size - 1) 
+	if (y < fieldSize - 1) 
 		count += updateCell(x, y + 1);
-	if (y < field_size - 1 && x > 0)
+	if (y < fieldSize - 1 && x > 0)
 		count += updateCell(x - 1, y + 1);
 	if (x > 0)
 		count += updateCell(x - 1, y);
-	var intId = y * field_size + x;
+
+	var intId = y * fieldSize + x;
 	var element = document.getElementById("cell" + intId);
 	element.setAttribute("style", "background-color: #FFFFFF; border:1px solid black");
 	element.innerHTML = '<p style="width: 50px; margin: 40px auto;">' + count + '</p>';
@@ -130,7 +154,7 @@ function updateCell(x, y) {
 function updateCellFlag(x, y) {
 	if (flagsLeft == 0)
 		return;
-	var intId = y * field_size + x;
+	var intId = y * fieldSize + x;
 	var element = document.getElementById("cell" + intId);
 	if (field[y][x] ==  cellStates.HIDDEN_MINE || field[y][x] == cellStates.HIDDEN_EMPTY) {
 		flagsLeft--;
@@ -144,21 +168,19 @@ function updateCellFlag(x, y) {
 	updateFlagsTextView();
 	//Если все флаги установлены и нет скрытых клеток -> конец игры
 	if (flagsLeft == 0) {
-		var found = false;
-		for (var i = 0; i < field_size; i++) {
-			for (var j = 0; j < field_size; j++) {
-				if (field[i][j] == cellStates.HIDDEN_MINE || field[i][j] == cellStates.HIDDEN_EMPTY) {
-					found = true;
-					break;
-				}
-
-			}
-			if (found)
-				break;
-		}
-		if (!found)
+		if(!checkHasHiddenCells())
 			endGame(true);
 	}
+}
+
+function checkHasHiddenCells() {
+	for (var i = 0; i < fieldSize; i++) {
+		for (var j = 0; j < fieldSize; j++) {
+			if (field[i][j] == cellStates.HIDDEN_MINE || field[i][j] == cellStates.HIDDEN_EMPTY) {
+				return true;				}
+			}
+		}
+	return false;
 }
 
 function updateFlagsTextView() {
