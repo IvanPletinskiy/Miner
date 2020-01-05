@@ -4,6 +4,10 @@ var fieldDiv;
 var minesTotal;
 var flagsLeft;
 var isFirstClick;
+var colors = ["#FF0000", "#00FF00", "#00000FF", "#c62828", "#e91e63", "#29b6f6", "#f9a825", "#4e342e", "#4db6ac"];
+var seconds;
+var counterDiv;
+var counter;
 //Состояния ячеек поля
 var cellStates = {
 	HIDDEN_EMPTY : 0,
@@ -15,16 +19,18 @@ var cellStates = {
 
 $(document).ready(function() {
 	fieldDiv = $("#field");
+	counterDiv  = $("#secondsCounter");
 	initialize();
 });
 
 function initialize() {
 	field = [];
-	fieldSize = 8;
+	fieldSize = 16;
 	fieldDiv.html("");
-	minesTotal = 35;
+	minesTotal = 120;
 	flagsLeft = minesTotal;
 	isFirstClick = true;
+	seconds = 0;
 
 	fillField();
 
@@ -34,7 +40,15 @@ function initialize() {
 	$("#field").css("pointer-events","auto");
 
 	bindListeners();
+	if(counter)
+		cleanInterval(incrementSeconds);
+	counter = setInterval(incrementSeconds, 1000);
 }
+
+function incrementSeconds() {
+		seconds += 1;
+		$("#secondsCounter").text("Прошло времени: " + seconds + " секунд");
+	}
 
 function fillField() {
 	for (var i = 0; i < fieldSize; i++) {
@@ -78,11 +92,11 @@ function bindListeners() {
 		isFirstClick = false;
 		fillMines(intId);
 	}
-	if (e.button == 0) {
+	if (e.button === 0) {
 		handleCellClick.call(this, intId, true);
 		return false;
 	}
-    if (e.button == 2) { 
+    if (e.button === 2) { 
       handleCellClick.call(this, intId, false);
       return false; 
     } 
@@ -99,13 +113,13 @@ function handleCellClick(position, isLeftClick) {
 	var y = Math.floor(position / fieldSize);
 	var x = position % fieldSize;
 
-	if (field[y][x] == cellStates.OPEN) {		
+	if (field[y][x] === cellStates.OPEN) {		
 		return;
 	}
 
 	if (isLeftClick) {
 		//Если кликнули по мине, конец игры, иначе обновляем игровое поле
-		if (field[y][x] == cellStates.HIDDEN_MINE) {
+		if (field[y][x] === cellStates.HIDDEN_MINE) {
 			this.setAttribute("style", "background-color: #FF0000; border:1px solid black");
 			endGame(false);
 		} else {
@@ -118,9 +132,9 @@ function handleCellClick(position, isLeftClick) {
 }
 //Рекурсивный метод для открытия и обновления поля. Считает количество мин в соседних клетках, открывает клетку, если в ней нет мины.
 function updateCell(x, y) {
-	if (field[y][x] == cellStates.HIDDEN_MINE || field[y][x] == cellStates.FLAG_MINE)
+	if (field[y][x] === cellStates.HIDDEN_MINE || field[y][x] === cellStates.FLAG_MINE)
 		return 1;
-	if (field[y][x] == cellStates.OPEN || field[y][x] == cellStates.FLAG_EMPTY)
+	if (field[y][x] === cellStates.OPEN || field[y][x] === cellStates.FLAG_EMPTY)
 		return 0;
 
 	field[y][x] = cellStates.OPEN;
@@ -146,28 +160,29 @@ function updateCell(x, y) {
 	var intId = y * fieldSize + x;
 	var element = document.getElementById("cell" + intId);
 	element.setAttribute("style", "background-color: #FFFFFF; border:1px solid black");
-	element.innerHTML = '<p style="width: 50px; margin: 40px auto;">' + count + '</p>';
+	element.innerHTML = '<p style="width: 12px; margin: 15px auto; color:' + colors[count] + '">' + count + '</p>';
 	return 0;
 }
 
 //Устанавливает/убирает флаг в клетке
 function updateCellFlag(x, y) {
-	if (flagsLeft == 0)
+	if (flagsLeft === 0)
 		return;
 	var intId = y * fieldSize + x;
 	var element = document.getElementById("cell" + intId);
-	if (field[y][x] ==  cellStates.HIDDEN_MINE || field[y][x] == cellStates.HIDDEN_EMPTY) {
+	if (field[y][x] ===  cellStates.HIDDEN_MINE || field[y][x] === cellStates.HIDDEN_EMPTY) {
 		flagsLeft--;
-		element.innerHTML = '<p style="width: 50px; margin: 40px auto;">F</p>';
-		field[y][x] = (field[y][x] == cellStates.HIDDEN_MINE)? cellStates.FLAG_MINE : cellStates.FLAG_EMPTY; 
+		//element.innerHTML = '<p style="width: 12px; margin: 15px auto;">F</p>';
+		element.innerHTML = '<img src="https://img.icons8.com/color/48/000000/filled-flag.png">';
+		field[y][x] = (field[y][x] == cellStates.HIDDEN_MINE) ? cellStates.FLAG_MINE : cellStates.FLAG_EMPTY; 
 	} else {
 		element.innerHTML = "";
 		flagsLeft++;
-		field[y][x] = (field[y][x] == cellStates.FLAG_MINE)? cellStates.HIDDEN_MINE : cellStates.HIDDEN_EMPTY;
+		field[y][x] = (field[y][x] === cellStates.FLAG_MINE) ? cellStates.HIDDEN_MINE : cellStates.HIDDEN_EMPTY;
 	}
 	updateFlagsTextView();
 	//Если все флаги установлены и нет скрытых клеток -> конец игры
-	if (flagsLeft == 0) {
+	if (flagsLeft === 0) {
 		if(!checkHasHiddenCells())
 			endGame(true);
 	}
@@ -176,10 +191,12 @@ function updateCellFlag(x, y) {
 function checkHasHiddenCells() {
 	for (var i = 0; i < fieldSize; i++) {
 		for (var j = 0; j < fieldSize; j++) {
-			if (field[i][j] == cellStates.HIDDEN_MINE || field[i][j] == cellStates.HIDDEN_EMPTY) {
-				return true;				}
+			if (field[i][j] === cellStates.HIDDEN_MINE || field[i][j] === cellStates.HIDDEN_EMPTY) {
+				return true;				
 			}
+			
 		}
+	}
 	return false;
 }
 
@@ -194,6 +211,14 @@ function endGame(isWin) {
 		text = "Победа";
 	} else {
 		text = "Поражение";
+		for (var i = 0; i < fieldSize; i++) {
+			for (var j = 0; j < fieldSize; j++) {
+				if (field[i][j] === cellStates.HIDDEN_MINE || field[i][j] === cellStates.FLAG_MINE) {
+					var id = (i * fieldSize + j);
+					document.getElementById("cell" + id).innerHTML = '<img src="https://img.icons8.com/emoji/48/000000/bomb-emoji.png">';
+				}
+			}
+		}
 	}
 	$('#endGameTextDiv').html("<h1>" + text + "</h1>");
 }
