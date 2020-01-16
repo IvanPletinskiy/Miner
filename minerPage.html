@@ -7,18 +7,21 @@
 	<script src="gameController.js" charset="utf-8"></script>
 </head>
 	<body oncontextmenu="return false;">
-		<div class="field" id="field">
-		</div>
-		<div id="endGameTextDiv">
-			<h1> </h1>
-		</div>
-		<div id="flagsLeftTextDiv">
-		</div>
-		<div id="secondsCounter">Прошло времени: 0 секунд</div>
-		<div>
-			<button class="startButton" id="startButton">
-				<h2>Начать заново</h2>
-			</button>
+		<div id="game-container" class="game-container" style="">
+			<div class="field" id="field" class="field">
+			</div>
+			<div class="game-info" >
+				<div id="endGameTextDiv">
+					<h1> </h1>
+				</div>
+				<div id="flagsLeftTextDiv"></div>
+				<div id="secondsCounter">Прошло времени: 0 секунд</div>
+				<div>
+					<button class="startButton" id="startButton">
+						<h2>Начать заново</h2>
+					</button>
+				</div>	
+			</div>
 		</div>
 	</body>
 </html>

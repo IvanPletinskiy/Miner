@@ -4,7 +4,7 @@ var fieldDiv;
 var minesTotal;
 var flagsLeft;
 var isFirstClick;
-var colors = ["#FF0000", "#00FF00", "#00000FF", "#c62828", "#e91e63", "#29b6f6", "#f9a825", "#4e342e", "#4db6ac"];
+var colors = ["#FF0000", "#00FF00", "#00000FF", "#c62828", "#E91E63", "#29B6F6", "#F9A825", "#4E342E", "#4DB6AC"];
 var seconds;
 var counterDiv;
 var counter;
@@ -27,7 +27,7 @@ function initialize() {
 	field = [];
 	fieldSize = 16;
 	fieldDiv.html("");
-	minesTotal = 120;
+	minesTotal = 30;
 	flagsLeft = minesTotal;
 	isFirstClick = true;
 	seconds = 0;
@@ -41,14 +41,14 @@ function initialize() {
 
 	bindListeners();
 	if(counter)
-		cleanInterval(incrementSeconds);
+		clearInterval(counter);
 	counter = setInterval(incrementSeconds, 1000);
 }
 
 function incrementSeconds() {
-		seconds += 1;
-		$("#secondsCounter").text("Прошло времени: " + seconds + " секунд");
-	}
+	seconds += 1;
+	$("#secondsCounter").text("Прошло времени: " + seconds + " секунд");
+}
 
 function fillField() {
 	for (var i = 0; i < fieldSize; i++) {
@@ -133,35 +133,57 @@ function handleCellClick(position, isLeftClick) {
 //Рекурсивный метод для открытия и обновления поля. Считает количество мин в соседних клетках, открывает клетку, если в ней нет мины.
 function updateCell(x, y) {
 	if (field[y][x] === cellStates.HIDDEN_MINE || field[y][x] === cellStates.FLAG_MINE)
-		return 1;
+		return;
 	if (field[y][x] === cellStates.OPEN || field[y][x] === cellStates.FLAG_EMPTY)
-		return 0;
+		return;
 
 	field[y][x] = cellStates.OPEN;
-
-	var count = 0;
-	if (y > 0 && x > 0)
-		count += updateCell(x - 1, y - 1);
-	if (y > 0)
-		count += updateCell(x, y - 1);
-	if (y > 0 && x < fieldSize - 1)
-		count += updateCell(x + 1, y - 1);
-	if (x < fieldSize - 1)
-		count += updateCell(x + 1, y);
-	if (y < fieldSize - 1 && x < fieldSize - 1)
-		count += updateCell(x + 1, y + 1);
-	if (y < fieldSize - 1) 
-		count += updateCell(x, y + 1);
-	if (y < fieldSize - 1 && x > 0)
-		count += updateCell(x - 1, y + 1);
-	if (x > 0)
-		count += updateCell(x - 1, y);
+	var count = getAdjacentMinesCount(x, y);
 
 	var intId = y * fieldSize + x;
 	var element = document.getElementById("cell" + intId);
 	element.setAttribute("style", "background-color: #FFFFFF; border:1px solid black");
-	element.innerHTML = '<p style="width: 12px; margin: 15px auto; color:' + colors[count] + '">' + count + '</p>';
-	return 0;
+	if(count > 0) {
+		element.innerHTML = '<p style="width: 12px; margin: 15px auto; color:' + colors[count] + '">' + count + '</p>';
+	} else {
+		if (y > 0 && x > 0)
+			updateCell(x - 1, y - 1);
+		if (y > 0)
+			updateCell(x, y - 1);
+		if (y > 0 && x < fieldSize - 1)
+			updateCell(x + 1, y - 1);
+		if (x < fieldSize - 1)
+			updateCell(x + 1, y);
+		if (y < fieldSize - 1 && x < fieldSize - 1)
+			updateCell(x + 1, y + 1);
+		if (y < fieldSize - 1) 
+			updateCell(x, y + 1);
+		if (y < fieldSize - 1 && x > 0)
+			updateCell(x - 1, y + 1);
+		if (x > 0)
+			updateCell(x - 1, y);
+	}
+}
+
+function getAdjacentMinesCount(x, y) {
+	var count = 0;
+	if (y > 0 && x > 0 && (field[y - 1][x - 1] === cellStates.HIDDEN_MINE || field[y - 1][x - 1] === cellStates.FLAG_MINE))
+		count++;
+	if (y > 0 && (field[y - 1][x] === cellStates.HIDDEN_MINE || field[y - 1][x] === cellStates.FLAG_MINE))
+		count++;
+	if (y > 0 && x < fieldSize - 1 && (field[y - 1][x + 1] === cellStates.HIDDEN_MINE || field[y - 1][x + 1] === cellStates.FLAG_MINE))
+		count++;
+	if (x < fieldSize - 1 && (field[y][x + 1] === cellStates.HIDDEN_MINE || field[y][x + 1] === cellStates.FLAG_MINE))
+		count++;
+	if (y < fieldSize - 1 && x < fieldSize - 1 && (field[y + 1][x + 1] === cellStates.HIDDEN_MINE || field[y + 1][x + 1] === cellStates.FLAG_MINE))
+		count++;
+	if (y < fieldSize - 1 && (field[y + 1][x] === cellStates.HIDDEN_MINE || field[y + 1][x] === cellStates.FLAG_MINE))
+		count++;
+	if (y < fieldSize - 1 && x > 0 && (field[y + 1][x - 1] === cellStates.HIDDEN_MINE || field[y + 1][x - 1] === cellStates.FLAG_MINE))
+		count++;
+	if (x > 0 && (field[y][x - 1] === cellStates.HIDDEN_MINE || field[y][x - 1] === cellStates.FLAG_MINE))
+		count++;
+	return count;
 }
 
 //Устанавливает/убирает флаг в клетке
@@ -206,6 +228,10 @@ function updateFlagsTextView() {
 
 function endGame(isWin) {
 	$(".field").css("pointer-events","none");
+
+	if(counter)
+		clearInterval(counter);
+
 	var text;
 	if (isWin) {
 		text = "Победа";

@@ -1,9 +1,25 @@
-* {
-  box-sizing: border-box;
+
+
+.game-container {
+  display: flex;
+  flex-direction: row;
+}
+
+.game-info {
+  padding-left: 5vh;
+  display: flex;
+  flex-direction: column;
+
+}
+
+.field {
+  width: auto;
+  height: auto;
 }
 
 .column {
   float: left;
+  display: flex;
   width: 50px;
   height: 50px;
   text-align: center;
@@ -13,15 +29,18 @@
 }
 
 .row:after {
+  display: flex;
+  flex-wrap: nowrap;
   content: "";
-  display: table;
+  width: auto;
+  align-content: flex-start;
+  /*display: table; */
   clear: both;
 }
 .startButton {
+  margin-top: 10px;
   width: 200px;
   height: 50px;
   color: #000;
 }
-.field {
 
-}
